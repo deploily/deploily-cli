@@ -20,9 +20,6 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
-      hono:
-        specifier: ^4.12.27
-        version: 4.12.27
       keytar:
         specifier: ^7.9.0
         version: 7.9.0
