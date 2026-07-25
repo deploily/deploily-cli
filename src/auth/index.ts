@@ -22,6 +22,23 @@ class AuthenticationService {
     })
   }
 
+  private buildClientAuthHeaders(): Record<string, string> {
+    const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET
+
+    if (!clientSecret) {
+      return {}
+    }
+
+    const clientId = process.env.KEYCLOAK_CLIENT_ID!
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+      "base64",
+    )
+
+    return {
+      Authorization: `Basic ${basicAuth}`,
+    }
+  }
+
   // Generate authorization URL for user login
   generateAuthorizationUrl(): { url: string; context: AuthContext } {
     const state = generateState()
@@ -60,16 +77,13 @@ class AuthenticationService {
         code_verifier: codeVerifier,
       })
 
-      if (process.env.KEYCLOAK_CLIENT_SECRET) {
-        body.set("client_secret", process.env.KEYCLOAK_CLIENT_SECRET)
-      }
-
       const response = await this.client.post<TokenResponse>(
         process.env.KEYCLOAK_TOKEN_ENDPOINT!,
         body,
         {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            ...this.buildClientAuthHeaders(),
           },
         },
       )
@@ -81,9 +95,14 @@ class AuthenticationService {
           typeof error.response?.data === "string"
             ? error.response.data
             : JSON.stringify(error.response?.data ?? {})
+        const authHint =
+          error.response?.status === 401 &&
+          responseData.includes("unauthorized_client")
+            ? " This usually means the Keycloak client is confidential and KEYCLOAK_CLIENT_SECRET is missing or invalid."
+            : ""
 
         throw new Error(
-          `Failed to exchange code for token: ${error.message}${responseData ? ` (${responseData})` : ""}`,
+          `Failed to exchange code for token: ${error.message}${responseData ? ` (${responseData})` : ""}${authHint}`,
         )
       }
 
@@ -102,16 +121,13 @@ class AuthenticationService {
         client_id: process.env.KEYCLOAK_CLIENT_ID!,
       })
 
-      if (process.env.KEYCLOAK_CLIENT_SECRET) {
-        body.set("client_secret", process.env.KEYCLOAK_CLIENT_SECRET)
-      }
-
       const response = await this.client.post<TokenResponse>(
         process.env.KEYCLOAK_TOKEN_ENDPOINT!,
         body,
         {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            ...this.buildClientAuthHeaders(),
           },
         },
       )
@@ -194,14 +210,11 @@ class AuthenticationService {
           refresh_token: credentials.refresh_token,
         })
 
-        if (process.env.KEYCLOAK_CLIENT_SECRET) {
-          body.set("client_secret", process.env.KEYCLOAK_CLIENT_SECRET)
-        }
-
         // Optionally call Keycloak logout endpoint
         await this.client.post(process.env.KEYCLOAK_LOGOUT_ENDPOINT!, body, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            ...this.buildClientAuthHeaders(),
           },
         })
       } catch (error) {
