@@ -20,21 +20,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
           registry-url: "https://registry.npmjs.org/"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build project
-        run: npm run build
+        run: pnpm run build
 
       - name: Verify npm authentication
         run: |
-          npm config set //registry.npmjs.org/:_authToken "${NODE_AUTH_TOKEN}"
+          printf "//registry.npmjs.org/:_authToken=%s\n" "${NODE_AUTH_TOKEN}" > ~/.npmrc
           npm whoami
 
       - name: Dry-run publish

@@ -4,16 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@deploily/deploily-cli': 'link:'
-
 importers:
 
   .:
     dependencies:
-      '@deploily/deploily-cli':
-        specifier: 'link:'
-        version: 'link:'
       '@hono/node-server':
         specifier: ^2.0.6
         version: 2.0.6(hono@4.12.27)
