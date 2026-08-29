@@ -1,6 +1,6 @@
 {
   "name": "@deploily/deploily-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Deploily CLI - Deploy and manage your applications with ease",
   "license": "APACHE-2.0",
   "keywords": [
