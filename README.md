@@ -1,69 +1,58 @@
 # deploily-cli
 
-Deploily CLI is a native Node.js command-line tool for authenticating with a Keycloak-backed Deploily environment.
+Deploily CLI is a Node.js command-line tool for authenticating against a Keycloak-backed Deploily environment.
 
 ## Features
 
 - OAuth2 login flow with PKCE
 - Local callback server for browser-based authentication
-- Secure credential storage via `keytar` with file fallback
+- Secure credential storage via `keytar` with a file fallback
 - `login`, `logout`, and `whoami` commands
 - TypeScript + native ESM project setup
 
-## Requirements
+## Section 1: Using the CLI
 
-- Node.js 20+ recommended
-- pnpm
-- A running Keycloak instance
+This is the recommended section for developers who want to install and use the published CLI without contributing to the repository.
 
-## Quick Start
+### Requirements
 
-1. Install dependencies:
+- Node.js 20+
+- npm (or pnpm)
+- A browser for the OAuth login flow
 
-   ```bash
-   pnpm install
-   ```
+### Default behavior
 
-2. Start Keycloak with Docker Compose:
+The CLI connects to the public Deploily Keycloak instance by default:
 
-   ```bash
-   docker compose up -d
-   ```
+- URL: `https://auth.deploily.cloud`
+- realm: `deploily`
+- client ID: `deploily`
 
-3. Navigate to `http://localhost:8080` and log in with the default admin credentials (`admin` / `admin`)
-   - Create a new realm
-   - Create a new client and add `http://localhost:8976/callback` as a valid redirect URI
-   - Create a new user and assign them to the realm
+No `.env` file is required for standard use. If you need to override the defaults for a custom environment, you can set `KEYCLOAK_URL`, `KEYCLOAK_REALM`, or `KEYCLOAK_CLIENT_ID`.
 
-4. Configure your `.env` file with the Keycloak endpoints and client details
+### Install from npm
 
-5. Build and run the CLI:
+```bash
+npm install -g @deploily/deploily-cli
+```
 
-   ```bash
-   pnpm build
-   node dist/index.js --help
-   ```
+Or run it without installing globally:
 
-   To invoke it as a shell command named `deploily`, link the current package globally and ensure pnpm's global bin directory is on your `PATH`:
+```bash
+npx @deploily/deploily-cli --help
+```
 
-   ```bash
-   export PATH="$HOME/.local/share/pnpm/bin:$PATH"
-   pnpm setup
-   pnpm link --global .
-   deploily --help
-   ```
+### Basic usage
 
-   If the `deploily` command still is not found, open a new shell session after adding the PATH export or run the CLI directly with:
+```bash
+deploily --help
+deploily --version
+deploily login
+deploily logout
+deploily whoami
+```
 
-   ```bash
-   node dist/index.js --help
-   ```
-
-## Docker Compose
-
-The repository includes a simple local Keycloak setup in [docker-compose.yml](docker-compose.yml). This starts Keycloak with the default admin credentials `admin` / `admin` on port `8080`.
-
-## Commands
+### Commands
 
 ```bash
 deploily login
@@ -73,28 +62,69 @@ deploily --help
 deploily --version
 ```
 
-### `login`
+### Authentication flow
 
-Opens your browser, starts the local callback server, and completes the OAuth2 PKCE flow against Keycloak.
+1. The CLI uses the default Keycloak base URL `https://auth.deploily.cloud` when no environment variables are set.
+2. It uses the `deploily` realm and the `deploily` client ID by default.
+3. It opens the Keycloak authorization URL in your browser.
+4. Keycloak redirects back to the local callback server on port `8976`.
+5. The CLI exchanges the authorization code for tokens.
+6. User info is fetched from the Keycloak userinfo endpoint.
+7. Credentials are stored with `keytar`, or in `~/.config/deploily/config.json` if `keytar` is unavailable.
 
-### `logout`
+## Section 2: Contributing to the project
 
-Clears locally stored credentials and attempts to log out from Keycloak.
+This section is for contributors working from the repository source.
 
-### `whoami`
+### Requirements
 
-Shows the current authenticated user when credentials are available.
+- Node.js 20+
+- pnpm
+- Docker (optional, for the local Keycloak container)
 
-## Authentication Flow
+### Clone and install
 
-1. The CLI generates a PKCE code verifier, code challenge, and state value.
-2. It opens the Keycloak authorization URL in your browser.
-3. Keycloak redirects back to the local callback server on port `8976`.
-4. The CLI exchanges the authorization code for tokens.
-5. User info is fetched from the Keycloak userinfo endpoint.
-6. Credentials are stored with `keytar`, or in `~/.config/deploily/config.json` if `keytar` is unavailable.
+```bash
+git clone <repository-url>
+cd deploily-cli
+pnpm install
+```
 
-## Project Structure
+### Build the CLI from source
+
+```bash
+pnpm build
+node dist/index.js --help
+```
+
+### Run the local CLI binary
+
+If you want to invoke the project as `deploily` from your shell while developing locally:
+
+```bash
+export PATH="$HOME/.local/share/pnpm/bin:$PATH"
+pnpm setup
+pnpm link --global .
+deploily --help
+```
+
+If the command is still not found, use the direct entry point instead:
+
+```bash
+node dist/index.js --help
+```
+
+### Local development flow
+
+```bash
+pnpm build
+node dist/index.js --help
+deploily login
+```
+
+The project devcontainer already exposes the Keycloak service, so no separate Docker Compose startup is required.
+
+### Project structure
 
 - `src/index.ts` - CLI entry point and command routing
 - `src/commands/` - CLI command handlers
@@ -104,9 +134,9 @@ Shows the current authenticated user when credentials are available.
 - `src/utils/` - PKCE helpers
 - `src/types/` - shared TypeScript types
 
-## Publishing
+### Publishing checks
 
-Before publishing to npm, verify that the auth token works and that the package will publish successfully:
+Before publishing a release, validate the package and the npm auth flow:
 
 ```bash
 export NPM_TOKEN="npm_your_token_here"
@@ -115,12 +145,10 @@ npm whoami
 npm publish --access public --dry-run
 ```
 
-In GitHub Actions, configure a repository secret named `NPM_TOKEN` and the workflow will:
+In GitHub Actions, configure a repository secret named `NPM_SECRET_TOKEN` and the publish workflow will:
 
 - install dependencies
 - build the CLI
 - validate authentication with `npm whoami`
-- run a `npm publish --dry-run`
+- run a dry-run publish
 - publish the package to npm on a successful run
-
-This makes it easy to confirm the publish phase is working before the actual release is made.
