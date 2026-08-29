@@ -1,0 +1,25 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+	"name": "Node.js & TypeScript",
+	// Use Docker Compose so we can bring up the Keycloak service alongside the dev container.
+	"dockerComposeFile": ["docker-compose.yml"],
+	// The service in the compose files that VS Code should open a shell in.
+	"service": "workspace",
+	// Folder inside the container that will be used as the workspace.
+	"workspaceFolder": "/workspace",
+	// Ensure the external Keycloak service is started when the devcontainer is created.
+	// "runServices": ["keycloak"],
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "yarn install",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

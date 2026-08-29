@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/typescript-node:5-24-trixie
+    # Mount the repository root into the container's workspace folder
+    volumes:
+      - ..:/workspace:cached
+    # Keep the container running; VS Code will attach a shell/session.
+    command: tail -f /dev/null
+    tty: true
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.3
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+    command: start-dev
+    ports:
+      - "8080:8080"

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { handleLogin, handleLogout, handleWhoami } from "./commands/auth.js"
 
 const VERSION = "1.0.0" // TODO: read from package.json

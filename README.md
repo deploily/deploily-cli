@@ -44,9 +44,24 @@ Deploily CLI is a native Node.js command-line tool for authenticating with a Key
    node dist/index.js --help
    ```
 
+   To invoke it as a shell command named `deploily`, link the current package globally and ensure pnpm's global bin directory is on your `PATH`:
+
+   ```bash
+   export PATH="$HOME/.local/share/pnpm/bin:$PATH"
+   pnpm setup
+   pnpm link --global .
+   deploily --help
+   ```
+
+   If the `deploily` command still is not found, open a new shell session after adding the PATH export or run the CLI directly with:
+
+   ```bash
+   node dist/index.js --help
+   ```
+
 ## Docker Compose
 
-The repository includes a simple local Keycloak setup in [docker-compose.yml](docker-compose.yml), This starts Keycloak with the default admin credentials `admin` / `admin` on port `8080`.
+The repository includes a simple local Keycloak setup in [docker-compose.yml](docker-compose.yml). This starts Keycloak with the default admin credentials `admin` / `admin` on port `8080`.
 
 ## Commands
 
@@ -88,3 +103,24 @@ Shows the current authenticated user when credentials are available.
 - `src/storage/` - credential persistence
 - `src/utils/` - PKCE helpers
 - `src/types/` - shared TypeScript types
+
+## Publishing
+
+Before publishing to npm, verify that the auth token works and that the package will publish successfully:
+
+```bash
+export NPM_TOKEN="npm_your_token_here"
+npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+npm whoami
+npm publish --access public --dry-run
+```
+
+In GitHub Actions, configure a repository secret named `NPM_TOKEN` and the workflow will:
+
+- install dependencies
+- build the CLI
+- validate authentication with `npm whoami`
+- run a `npm publish --dry-run`
+- publish the package to npm on a successful run
+
+This makes it easy to confirm the publish phase is working before the actual release is made.
